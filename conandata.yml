@@ -1,0 +1,8 @@
+---
+sources:
+  "2025.09.18":
+    url:
+      - "https://github.com/ralna/spral/archive/refs/tags/v2025.09.18.tar.gz"
+    sha256: "1358168ac95297049e4fc810e54a16e0c765796cfbaa156e09979e2620b7dae7"
+patches:
+  "2025.09.18": []

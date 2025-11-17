@@ -1,0 +1,47 @@
+---
+name: Windows MSVC
+
+on: [push, workflow_dispatch]
+
+env:
+  CONAN_UPLOAD: ${{ secrets.CONAN_URL }}
+  CONAN_PASSWORD_SINTEF: ${{ secrets.CONAN_PASSWORD }}
+  CONAN_LOGIN_USERNAME_SINTEF: ${{ secrets.CONAN_USER }}
+  CONFIG_URL: https://github.com/sintef-ocean/conan-configs.git
+
+jobs:
+  conan-with-msvc:
+    name: Conan
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["2025.09.18"]
+        profile: [msvc17]
+        compiler_version: [194]
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install prerequisites
+        run: |
+          pip3 install --upgrade setuptools pip
+          pip3 install --upgrade conan~=2.0
+      - name: Configure Conan
+        run: conan remote add sintef ${{ env.CONAN_UPLOAD }}
+      - name: Get package name Conan 2
+        shell: pwsh
+        run: |
+          $package_name=conan inspect -f json . | jq .name -r
+          echo "package_name=$package_name" >> $Env:GITHUB_ENV
+      - name: Conan create
+        run: |
+          conan config install ${{ env.CONFIG_URL }} --type git -sf conan2.0
+          conan config install ${{ env.CONFIG_URL }}  --type git -sf profiles -tf profiles
+          conan create -s build_type=${{ matrix.build_type }} `
+            -s compiler.version=${{ matrix.compiler_version }} `
+            -pr:b=${{ matrix.profile }} -pr:h=${{ matrix.profile }} `
+            -b missing -b outdated -b ${{ env.package_name }}* `
+            --version ${{ matrix.version }} --user sintef --channel stable `
+            .
+      - name: Conan upload
+        run: conan upload --confirm -r sintef ${{ env.package_name }}* --force
