@@ -1,7 +1,8 @@
 ---
 name: Windows MSVC
 
-on: [push, workflow_dispatch]
+#on: [push, workflow_dispatch]
+on: []
 
 env:
   CONAN_UPLOAD: ${{ secrets.CONAN_URL }}

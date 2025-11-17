@@ -59,5 +59,4 @@ with_openmp | True | [True, False]
 
 ## Known recipe issues
 
-  - This recipe does not yet build mumps on Windows
-  - `with_cpp=True` is only available for static builds
+  - Does not work on Windows msvc yet

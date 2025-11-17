@@ -61,11 +61,13 @@ class PackageConan(ConanFile):
             if not self.settings.os == "Windows":
                 if not self.settings.compiler == "gcc":
                     self.requires("llvm-openmp/20.1.6")
+        if self.settings.os != "Windows":
+            self.requires("libudev/system")
 
     def validate(self):
         check_min_cppstd(self, 11)
-        #if is_msvc(self) and self.info.options.shared:
-        #    raise ConanInvalidConfiguration(f"{self.ref} can not be built as shared on Visual Studio and msvc.")
+        if is_msvc(self):
+            raise ConanInvalidConfiguration(f"{self.ref} recipe does not work for msvc yet")
 
     def build_requirements(self):
         self.tool_requires("meson/[>=1.2.3 <2]")
@@ -93,8 +95,8 @@ class PackageConan(ConanFile):
         tc.project_options["examples"] = False
         tc.project_options["tests"] = False
         tc.project_options["gpu"] = False  # Requires CCI's hwloc to support it too
-        tc.project_options["metis64"] = self.options.with_64bit_int
-        tc.project_options["openmp"] = self.options.with_openmp
+        tc.project_options["metis64"] = bool(self.options.with_64bit_int)
+        tc.project_options["openmp"] = bool(self.options.with_openmp)
 
         tc.project_options["libmetis_version"] = "5"
         tc.project_options["libblas"] = "openblas"
@@ -121,10 +123,12 @@ class PackageConan(ConanFile):
         self.cpp_info.libs = ["spral"]
         self.cpp_info.set_property("pkg_config_name", "spral")
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs.extend(["m", "mvec", "udev"])
+            self.cpp_info.system_libs.extend(["m", "mvec"])
             self.cpp_info.system_libs.extend(["gfortran", "quadmath"])
         self.cpp_info.requires.extend(["openblas::openblas", "metis::metis", "hwloc::hwloc"])
 
+        if self.settings.os != "Windows":
+            self.cpp_info.requires.append("libudev::libudev")
         if self.options.with_openmp:
             if self.settings.compiler == "gcc":
                 self.cpp_info.system_libs.extend(["gomp"])
